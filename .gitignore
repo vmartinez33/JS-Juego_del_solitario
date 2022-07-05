@@ -1,4 +1,4 @@
-ndows thumbnail cache files
+# Windows thumbnail cache files
 Thumbs.db
 Thumbs.db:encryptable
 ehthumbs.db
@@ -23,5 +23,5 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
-# Evitar la info de la actividad y las posibles entregas
+# Excluir el pdf de la actividad
 *.pdf
