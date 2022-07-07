@@ -15,12 +15,23 @@
 	right: 3px;
 }
 
+/* Imagen alineada a la derecha del título principal */
+
+img#imagenTitulo {
+	float: right;
+	width: 100px;
+}
 
 /* Centrado del título y color */
 h1#titulo {
 	text-align: center;
 	color: #E65014;
 }
+
+div.center {
+	text-align: center;
+  }
+
 
 /* Centrado de los marcadores de tiempo y movimientos */
 h2#marcadores{ 
@@ -40,6 +51,7 @@ div.tapete{
 	display: inline-block;
 	position: relative;
 	margin: 10px;
+	text-align: left;
 }
 
 /* Dimensiones y color de fondo para el tapete inicial */
