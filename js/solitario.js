@@ -26,6 +26,8 @@ let mazo_receptor2 = [];
 let mazo_receptor3 = [];
 let mazo_receptor4 = [];
 
+var mazos_receptores = {"receptor1": mazo_receptor1, "receptor2": mazo_receptor2, "receptor3": mazo_receptor3, "receptor4": mazo_receptor4};
+
 // Contadores de cartas
 let cont_inicial     = document.getElementById("contador_inicial");
 let cont_sobrantes   = document.getElementById("contador_sobrantes");
@@ -34,6 +36,9 @@ let cont_receptor2   = document.getElementById("contador_receptor2");
 let cont_receptor3   = document.getElementById("contador_receptor3");
 let cont_receptor4   = document.getElementById("contador_receptor4");
 let cont_movimientos = document.getElementById("contador_movimientos");
+
+var contadores_receptores = {"receptor1": cont_receptor1, "receptor2": cont_receptor2, "receptor3": cont_receptor3, "receptor4": cont_receptor4};
+
 
 // Tiempo
 var cont_tiempo  = document.getElementById("contador_tiempo"); // span cuenta tiempo
@@ -59,10 +64,10 @@ function comenzar_juego() {
 	el elemento img, inclúyase como elemento del array mazo_inicial. 
 	*/
 
-	/*** !!!!!!!!!!!!!!!!!!! CODIGO !!!!!!!!!!!!!!!!!!!! **/	
-    
-	//
-	mazo_inicial = [];
+	// Vaciar todos los mazos, tanto arrays como los tapetes (eliminar childs <img>)
+	vaciar_mesa();
+
+	// Se crean las cartas y se añaden al array del mazo inicial
 	crear_mazo_inicial(mazo_inicial);
 	
 	// Barajar
@@ -72,12 +77,7 @@ function comenzar_juego() {
 	cargar_tapete_inicial(mazo_inicial);
 
 	// Puesta a cero de contadores de mazos
-	set_contador(cont_sobrantes, 0);
-	set_contador(cont_receptor1, 0);
-	set_contador(cont_receptor2, 0);
-	set_contador(cont_receptor3, 0);
-	set_contador(cont_receptor4, 0);
-	set_contador(cont_movimientos, 0);
+	inicializar_contadores();
 	
 	// Arrancar el conteo de tiempo
 	arrancar_tiempo();
@@ -86,14 +86,39 @@ function comenzar_juego() {
 	configurar_eventos();
 } // comenzar_juego
 
+function vaciar_mesa() {
+	mazo_inicial.length = 0;
+	mazo_sobrantes.length = 0;
+	mazo_receptor1.length = 0;
+	mazo_receptor2.length = 0;
+	mazo_receptor3.length = 0;
+	mazo_receptor4.length = 0;
+
+	tapete_inicial.replaceChildren(cont_inicial);
+	tapete_sobrantes.replaceChildren(cont_sobrantes);
+	tapete_receptor1.replaceChildren(cont_receptor1);
+	tapete_receptor2.replaceChildren(cont_receptor2);
+	tapete_receptor3.replaceChildren(cont_receptor3);
+	tapete_receptor4.replaceChildren(cont_receptor4);
+}
+
+function inicializar_contadores() {
+	set_contador(cont_sobrantes, 0);
+	set_contador(cont_receptor1, 0);
+	set_contador(cont_receptor2, 0);
+	set_contador(cont_receptor3, 0);
+	set_contador(cont_receptor4, 0);
+	set_contador(cont_movimientos, 0);
+}
+
 function crear_mazo_inicial(mazo){
-	for (i=9; i<=12; i++){
-		for (j=0; j<=3; j++){
-			let id = + i + "-" + palos[j];
+	for (i=0; i<numeros.length; i++){
+		for (j=0; j<palos.length; j++){
+			let id = + numeros[i] + "-" + palos[j];
 			let source = "imagenes/baraja/" + id + ".png";
 			let carta_nueva = document.createElement("img");
 			carta_nueva.setAttribute("src", source);
-			carta_nueva.setAttribute("data-numero", i);
+			carta_nueva.setAttribute("data-numero", numeros[i]);
 			carta_nueva.setAttribute("data-palo", palos[j]);
 			carta_nueva.setAttribute("class", "carta");
 			carta_nueva.setAttribute("id", id);
@@ -155,7 +180,6 @@ function arrancar_tiempo(){
 */
 function barajar(mazo) {
 	mazo.sort(()=> Math.random() - 0.5);
-	console.log(mazo);
 } // barajar
 
 
@@ -168,7 +192,6 @@ function barajar(mazo) {
 	Al final se debe ajustar el contador de cartas a la cantidad oportuna
 */
 function cargar_tapete_inicial(mazo) {	
-	style="width:50px; position: absolute; box-sizing: content-box; padding-left: 5px; padding-top: 5px"	
 	for(i=0; i<mazo.length; i++){
 		let carta = mazo[i];
 		carta.style.width = "50px";
@@ -197,7 +220,6 @@ function inc_contador(contador){
 */
 function dec_contador(contador){
 	contador.innerHTML = +contador.innerHTML - 1;
-	/*** !!!!!!!!!!!!!!!!!!! CODIGO !!!!!!!!!!!!!!!!!!!! ***/	
 } // dec_contador
 
 /**
@@ -218,42 +240,137 @@ function configurar_eventos() {
 function configurar_eventos_cartas() {
 	for (i=0; i< mazo_inicial.length; i++) {
 		let carta = mazo_inicial[i];
-		carta.ondragstart = drag_start_event;
+		carta.ondragstart = al_mover;
 		carta.ondrag = function(){};
 		carta.ondragend = function(){};
 	}
 }
 
-function drag_start_event(e) {
+function al_mover(e) {
 	e.dataTransfer.setData( "text/plain/numero", e.target.dataset["numero"] ); 
 	e.dataTransfer.setData( "text/plain/palo", e.target.dataset["palo"] ); 
 	e.dataTransfer.setData( "text/plain/id", e.target.id );
 }
 
 function configurar_eventos_tapetes() {
-	tapete_sobrantes.ondragenter = function(e) { e.preventDefault(); }; 
-	tapete_sobrantes.ondragover = function(e) { e.preventDefault(); }; 
-	tapete_sobrantes.ondragleave = function(e) { e.preventDefault(); }; 
-	tapete_sobrantes.ondrop = drop_event;
+	conectar_eventos_tapete(tapete_sobrantes);
+	conectar_eventos_tapete(tapete_receptor1);
+	conectar_eventos_tapete(tapete_receptor2);
+	conectar_eventos_tapete(tapete_receptor3);
+	conectar_eventos_tapete(tapete_receptor4);
+}
+
+function conectar_eventos_tapete(tapete) {
+	tapete.ondragenter = function(e) { e.preventDefault(); }; 
+	tapete.ondragover = function(e) { e.preventDefault(); }; 
+	tapete.ondragleave = function(e) { e.preventDefault(); }; 
+	tapete.ondrop = drop_event;
 }
 
 function drop_event(e) {
+
 	e.preventDefault();
 	let id_carta = e.dataTransfer.getData("text/plain/id");
 	let numero_carta = e.dataTransfer.getData("text/plain/numero");
 	let palo_carta = e.dataTransfer.getData("text/plain/palo");
+	let color_carta = (palo_carta == "cua" || palo_carta == "viu")? "naranja" : "gris";
 	let carta = document.getElementById(id_carta);
-
+	let tapete_origen = carta.parentNode.id;
 
 	if (this.id == "sobrantes") {
-		carta.style.padding = "0px 0px 0px 0px";
-		carta.style.top = "50%";
-		carta.style.left = "50%";
-		carta.style.transform = "translate(-50%, -50%)";
-		this.appendChild(carta);
+		gestionar_sobrantes(this, tapete_origen, carta);
+	} else {
+		gestionar_receptores(this, tapete_origen, carta, color_carta, numero_carta);
 	}
+
 }
 
+function gestionar_sobrantes(tapete_sobrantes, tapete_origen, carta) {
+
+	if (tapete_origen != "sobrantes") {
+		inc_contador(cont_movimientos);
+		dejar_carta(carta, tapete_sobrantes);
+		inc_contador(cont_sobrantes);
+		dec_contador(cont_inicial);
+	
+		mazo_sobrantes.push(mazo_inicial.pop());
+		
+		console.log(mazo_inicial.length == 0 && mazo_sobrantes.length != 0);
+
+		if (mazo_inicial.length == 0 && mazo_sobrantes.length != 0) {
+			volver_a_barajar();
+		}
+
+		mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", "true");		
+
+		comprobar_victoria()
+	}
+
+}
+
+
+function volver_a_barajar() {
+	for (i=0; i<mazo_sobrantes.length; i++) {
+		mazo_inicial.push(mazo_sobrantes.pop());
+	}
+
+	barajar(mazo_inicial);
+	cargar_tapete_inicial(mazo_inicial);
+	tapete_sobrantes.replaceChildren(cont_sobrantes);
+	set_contador(cont_sobrantes, 0);
+}
+
+
+function gestionar_receptores(receptor_destino, tapete_origen, carta, color_carta, numero_carta) {
+
+	let mazo = mazos_receptores[receptor_destino.id];
+	let contador = contadores_receptores[receptor_destino.id];
+
+	let ultima_carta = mazo[mazo.length-1];
+
+	let condicion1 = (numero_carta == "12" && ultima_carta === undefined);
+	
+	if (ultima_carta) {
+		let palo_ultima_carta = ultima_carta.dataset["palo"];
+		let color_ultima_carta = (palo_ultima_carta == "cua" || palo_ultima_carta == "viu")? "naranja" : "gris";
+		var condicion2 = (numero_carta == ultima_carta.dataset["numero"]-1 && color_carta != color_ultima_carta);
+	} 
+
+	console.log("La condición es: " + (condicion1 || condicion2));
+
+	if (condicion1 || condicion2) {
+		dejar_carta(carta, receptor_destino);
+		inc_contador(contador);
+		inc_contador(cont_movimientos);
+		carta.setAttribute("draggable", "false");
+
+		if (tapete_origen == "inicial") {
+			dec_contador(cont_inicial);
+			mazo.push(mazo_inicial.pop());
+			if (mazo_inicial.length > 0) {mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", "true");}
+		} else {
+			dec_contador(cont_sobrantes)
+			mazo.push(mazo_sobrantes.pop());
+		}
+
+		comprobar_victoria()
+	}
+
+}
+
+function dejar_carta(carta, tapete){
+	carta.style.padding = "0px 0px 0px 0px";
+	carta.style.top = "50%";
+	carta.style.left = "50%";
+	carta.style.transform = "translate(-50%, -50%)";
+	tapete.appendChild(carta);
+}
+
+function comprobar_victoria() {
+	if (mazo_inicial.length==0 && mazo_sobrantes.length==0) {
+		console.log("Has ganado");
+	}
+}
 
 comenzar_juego();
 
