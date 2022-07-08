@@ -76,3 +76,9 @@ div.tapete#sobrantes{
 div.tapete.receptor{
 	background-color: lightgreen;
 }
+
+/* Dimensiones básicas de las cartas */
+img.carta{
+	width: 50px;
+	position: absolute;
+}
