@@ -149,10 +149,11 @@ function cargar_tapete_inicial(mazo) {
 		carta.style.top = i*paso + "px";
 		carta.style.left = i*paso + "px"
 		carta.style.transform = "";
-		carta.setAttribute("draggable", "false");
+		carta.setAttribute("draggable", false);
 		tapete_inicial.appendChild(carta);
 	}
-	mazo[mazo.length-1].setAttribute("draggable", "true");
+
+	mazo[mazo.length-1].setAttribute("draggable", true);
 	set_contador(cont_inicial, mazo.length);
 
 } // cargar_tapete_inicial
@@ -161,11 +162,13 @@ function cargar_tapete_inicial(mazo) {
 function arrancar_tiempo(){
 
 	if (temporizador) clearInterval(temporizador);
+
 	let interval = function (){
 			let tiempo = hms(segundos);
 			set_contador(cont_tiempo, tiempo);
             segundos++;
 		}
+
 	segundos = 0;
     interval(); // Primera visualización 00:00:00
 	temporizador = setInterval(interval, 1000);
@@ -174,6 +177,7 @@ function arrancar_tiempo(){
 
 
 function hms (segundos) {
+
 	let seg = Math.trunc( segundos % 60 );
 	let min = Math.trunc( (segundos % 3600) / 60 );
 	let hor = Math.trunc( (segundos % 86400) / 3600 );
@@ -181,6 +185,7 @@ function hms (segundos) {
 				+ ":" + ( (min<10)? "0"+min : ""+min )  
 				+ ":" + ( (seg<10)? "0"+seg : ""+seg );
 	return tiempo;
+
 } // hms
 
 
@@ -267,17 +272,17 @@ function al_soltar(e) {
 	let tapete_origen = carta.parentNode.id;
 
 	if (this.id == "sobrantes") {
-		gestionar_sobrantes(this, tapete_origen, carta);
+		soltar_en_sobrantes(this, tapete_origen, carta);
 	} else if (this.id == "extra") {
-		gestionar_extra(this, tapete_origen, carta, color_carta, numero_carta);
+		soltar_en_extra(this, tapete_origen, carta, color_carta, numero_carta);
 	} else {
-		gestionar_receptores(this, tapete_origen, carta, color_carta, numero_carta);
+		soltar_en_receptores(this, tapete_origen, carta, color_carta, numero_carta);
 	}
 
 } // al_soltar
 
 
-function gestionar_sobrantes(tapete_sobrantes, tapete_origen, carta) {
+function soltar_en_sobrantes(tapete_sobrantes, tapete_origen, carta) {
 
 	if (tapete_origen == "inicial") {
 
@@ -288,43 +293,146 @@ function gestionar_sobrantes(tapete_sobrantes, tapete_origen, carta) {
 	
 		mazo_sobrantes.push(mazo_inicial.pop());
 		if (mazo_inicial.length == 0) {volver_a_barajar();}
-		mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", "true");		
+		mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", true);		
 	
 	}
 
-} // gestionar_sobrantes
+} // soltar_en_sobrantes
 
 
-function gestionar_extra(tapete_extra, tapete_origen, carta, color_carta, numero_carta) {
+function soltar_en_extra(tapete_extra, tapete_origen, carta, color_carta, numero_carta) {
 
 	let ultima_carta = mazo_extra[mazo_extra.length-1];
+
 	let condicion_primera_carta = (ultima_carta === undefined);
+	let condicion_numero_color = ver_condicion_numero_color(ultima_carta, numero_carta, color_carta);
+
+	if (condicion_primera_carta || condicion_numero_color) {
+
+		inc_contador(cont_movimientos);
+		inc_contador(cont_extra);
+		carta.setAttribute("draggable", condicion_primera_carta);
+		dejar_carta_en_extra(carta, tapete_extra, mazo_extra.length);
+
+		mover_cartas_entre_mazos(tapete_origen, mazo_extra);
+
+	}
+
+} // soltar_en_extra
+
+
+function soltar_en_receptores(receptor_destino, tapete_origen, carta, color_carta, numero_carta) {
+
+	let mazo_receptor = mazos_receptores[receptor_destino.id];
+	let contador_receptor = contadores_receptores[receptor_destino.id];
+
+	let ultima_carta = mazo_receptor[mazo_receptor.length-1];
+
+	let condicion_primera_carta = (numero_carta == "12" && ultima_carta === undefined);
+	let condicion_numero_color = ver_condicion_numero_color(ultima_carta, numero_carta, color_carta);
+
+	if (condicion_primera_carta || condicion_numero_color) {
+
+		console.log("Carta aceptada!");
+
+		inc_contador(cont_movimientos);
+		inc_contador(contador_receptor);
+		carta.setAttribute("draggable", false);
+		dejar_carta(carta, receptor_destino);
+
+		mover_cartas_entre_mazos(tapete_origen, mazo_receptor, receptor_destino, contador_receptor);
+
+		comprobar_victoria();
+
+	}
+
+} // soltar_en_receptores
+
+
+function ver_condicion_numero_color(ultima_carta, numero_carta, color_carta) {
+
 	if (ultima_carta) {
 		let palo_ultima_carta = ultima_carta.dataset["palo"];
 		let color_ultima_carta = (palo_ultima_carta == "cua" || palo_ultima_carta == "viu")? "naranja" : "gris";
-		var condicion_numero_color = (numero_carta == ultima_carta.dataset["numero"]-1 && color_carta != color_ultima_carta);
-	} 
 
-	if (condicion_primera_carta || condicion_numero_color) {
-		inc_contador(cont_movimientos);
-		dejar_carta_extra(carta, tapete_extra, mazo_extra.length);
-		inc_contador(cont_extra);
-		carta.setAttribute("draggable", condicion_primera_carta);
-
-		if (tapete_origen == "inicial") {
-
-			dec_contador(cont_inicial);
-			mazo_extra.push(mazo_inicial.pop());
-			if (mazo_inicial.length == 0 && mazo_sobrantes.length != 0) {volver_a_barajar();}
-			if (mazo_inicial.length > 0) {mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", "true");}
-
-		} else {
-			dec_contador(cont_sobrantes);
-			mazo_receptor.push(mazo_sobrantes.pop());
-		}
+		return numero_carta == ultima_carta.dataset["numero"]-1 && color_carta != color_ultima_carta;
 	}
 
-}
+	return false;
+
+} // ver_condicion_numero_color
+
+
+function mover_cartas_entre_mazos(tapete_origen, mazo_destino, tapete_destino, contador_destino) {
+
+	console.log("Tapete origen: " + tapete_origen);
+	switch (tapete_origen) {
+		case "inicial":
+			mover_desde_inicial(mazo_destino);
+			break;
+		case "sobrantes":
+			mover_desde_sobrantes(mazo_destino);
+			break;
+		case "extra":
+			mover_desde_extras(mazo_destino, tapete_destino, contador_destino);
+			break;
+	}
+
+} // mover_cartas_entre_mazos
+
+
+function mover_desde_inicial(mazo_destino) {
+
+	dec_contador(cont_inicial);
+	mazo_destino.push(mazo_inicial.pop());
+	if (mazo_inicial.length == 0 && mazo_sobrantes.length != 0) {volver_a_barajar();}
+	if (mazo_inicial.length > 0) {mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", "true");}
+
+} // mover_desde_inicial
+
+
+function mover_desde_sobrantes(mazo_destino) {
+
+	dec_contador(cont_sobrantes);
+	mazo_destino.push(mazo_sobrantes.pop());
+
+} // mover_desde_sobrantes
+
+
+function mover_desde_extras(mazo_receptor, receptor_destino, contador_receptor) {
+	
+	for (i=0; i<mazo_extra.length; i++) {
+		let carta = mazo_extra[i];
+		carta.setAttribute("dragabble", false);
+		mazo_receptor.push(carta);
+		dejar_carta(carta, receptor_destino);
+	}
+
+	set_contador(contador_receptor, mazo_receptor.length);
+	set_contador(cont_extra, 0);
+	mazo_extra.length = 0;
+	tapete_extra.replaceChildren(cont_extra);
+
+} // mover_desde_extras
+
+
+function dejar_carta(carta, tapete){
+
+	carta.style.top = "50%";
+	carta.style.left = "50%";
+	carta.style.transform = "translate(-50%, -50%)";
+	tapete.appendChild(carta);
+
+} // dejar_carta
+
+function dejar_carta_en_extra(carta, tapete, i){
+
+	carta.style.top = "50%";
+	carta.style.left = 15 + paso*i + "%";
+	carta.style.transform = "translate(-50%, -50%)";
+	tapete.appendChild(carta);
+	
+} // dejar_carta_en_extra
 
 
 function volver_a_barajar() {
@@ -342,83 +450,9 @@ function volver_a_barajar() {
 } // volver_a_barajar
 
 
-function gestionar_receptores(receptor_destino, tapete_origen, carta, color_carta, numero_carta) {
-
-	let mazo_receptor = mazos_receptores[receptor_destino.id];
-	let contador_receptor = contadores_receptores[receptor_destino.id];
-
-	let ultima_carta = mazo_receptor[mazo_receptor.length-1];
-	let condicion_primera_carta = (numero_carta == "12" && ultima_carta === undefined);
-	if (ultima_carta) {
-		let palo_ultima_carta = ultima_carta.dataset["palo"];
-		let color_ultima_carta = (palo_ultima_carta == "cua" || palo_ultima_carta == "viu")? "naranja" : "gris";
-		var condicion_numero_color = (numero_carta == ultima_carta.dataset["numero"]-1 && color_carta != color_ultima_carta);
-	} 
-
-	if (condicion_primera_carta || condicion_numero_color) {
-		inc_contador(cont_movimientos);
-		dejar_carta(carta, receptor_destino);
-		inc_contador(contador_receptor);
-		carta.setAttribute("draggable", "false");
-
-		if (tapete_origen == "inicial") {
-
-			dec_contador(cont_inicial);
-			mazo_receptor.push(mazo_inicial.pop());
-			if (mazo_inicial.length == 0 && mazo_sobrantes.length != 0) {volver_a_barajar();}
-			if (mazo_inicial.length > 0) {mazo_inicial[mazo_inicial.length-1].setAttribute("draggable", "true");}
-
-		} else if (tapete_origen == "sobrantes") {
-			dec_contador(cont_sobrantes);
-			mazo_receptor.push(mazo_sobrantes.pop());
-		} else {
-			mover_extras(receptor_destino, mazo_receptor, contador_receptor);
-		}
-
-		comprobar_victoria();
-	}
-
-} // gestionar_receptores
-
-
-function mover_extras(receptor_destino, mazo_receptor, contador_receptor) {
-	
-	for (i=0; i<mazo_extra.length; i++) {
-		let carta = mazo_extra[i];
-		carta.setAttribute("dragabble", false);
-		mazo_receptor.push(carta);
-		dejar_carta(carta, receptor_destino);
-	}
-
-	set_contador(contador_receptor, mazo_receptor.length);
-	set_contador(cont_extra, 0);
-	mazo_extra.length = 0;
-	tapete_extra.replaceChildren(cont_extra);
-
-} // mover_extras
-
-
-function dejar_carta(carta, tapete){
-
-	carta.style.top = "50%";
-	carta.style.left = "50%";
-	carta.style.transform = "translate(-50%, -50%)";
-	tapete.appendChild(carta);
-
-} // dejar_carta
-
-function dejar_carta_extra(carta, tapete, i){
-
-	carta.style.top = "50%";
-	carta.style.left = 15 + paso*i + "%";
-	carta.style.transform = "translate(-50%, -50%)";
-	tapete.appendChild(carta);
-	
-} // dejar_carta_extra
-
-
 function comprobar_victoria() {
-	if (mazo_inicial.length==0 && mazo_sobrantes.length==0) {
+	
+	if (mazo_inicial.length==0 && mazo_sobrantes.length==0 && mazo_extra.length==0) {
 		clearInterval(temporizador);
 		alert("¡Has ganado! Has tardado " + hms(segundos-1) + " en completarlo y has utilizado " + cont_movimientos.innerHTML + " movimientos. Reinicia si quieres volver a jugar.");
 	}
