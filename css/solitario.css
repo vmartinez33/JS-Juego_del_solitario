@@ -67,11 +67,6 @@ div.tapete:not(#inicial){
 	width: 100px;
 }
 
-/* Dimensiones para el tapete extra */
-div.tapete#extra{
-	width: 345px;
-}
-
 /* Color de fondo para el tapete de las cartas sobrantes */
 div.tapete#sobrantes{
 	background-color: lightblue;
@@ -82,8 +77,9 @@ div.tapete.receptor{
 	background-color: lightgreen;
 }
 
-/* Color de fondo del tapete extra */
+/* Dimensiones y color para el tapete extra */
 div.tapete#extra{
+	width: 345px;
 	background-color: beige;
 }
 

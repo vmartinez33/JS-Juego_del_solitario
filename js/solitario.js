@@ -333,8 +333,6 @@ function soltar_en_receptores(receptor_destino, tapete_origen, carta, color_cart
 
 	if (condicion_primera_carta || condicion_numero_color) {
 
-		console.log("Carta aceptada!");
-
 		inc_contador(cont_movimientos);
 		inc_contador(contador_receptor);
 		carta.setAttribute("draggable", false);
@@ -365,7 +363,6 @@ function ver_condicion_numero_color(ultima_carta, numero_carta, color_carta) {
 
 function mover_cartas_entre_mazos(tapete_origen, mazo_destino, tapete_destino, contador_destino) {
 
-	console.log("Tapete origen: " + tapete_origen);
 	switch (tapete_origen) {
 		case "inicial":
 			mover_desde_inicial(mazo_destino);
